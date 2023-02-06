@@ -9,7 +9,6 @@ from deep_search.search.state import GameState
 
 @dataclass
 class ConnectFourAction(Action):
-    row: int
     col: int
     player: int
 
@@ -63,10 +62,10 @@ class ConnectFourState(GameState):
     def get_possible_actions(self) -> Iterable[ConnectFourAction]:
         for i in range(self.ncols):
             if self.top[i] < self.nrows:
-                yield ConnectFourAction(row=self.top[i], col=i, player=self.turn)
+                yield ConnectFourAction(col=i, player=self.turn)
 
     def get_next_state(self, action: ConnectFourAction) -> GameState:
-        x, y = action.row, action.col
+        x, y = self.top[action.col], action.col
         if self.board[x, y].sum() != 0:
             raise ValueError('Illegal action')
         new_board = np.copy(self.board)
@@ -89,3 +88,6 @@ class ConnectFourState(GameState):
         """ Use the 3d board itself with players being different channels. """
         # For 2d version: return torch.FloatTensor(np.vstack((self.board[:, :, 0], self.board[:, :, 1]))
         return torch.FloatTensor(self.board)
+
+    def __str__(self) -> str:
+        return str(self.board[::-1, :, 0] - self.board[::-1, :, 1])

@@ -39,6 +39,11 @@ toggle_minimax_player = lambda x: ('min' if x == 'max' else 'max')
 
 
 def minimax(node: GameNode, depth: int, player: Literal['max', 'min'], heuristic: Callable[[GameState], float]):
+    """
+    IMPORTANT: We only decrease the depth on MAX nodes, so that we always end the simulation on MIN nodes, i.e. we
+    call the heuristic on MIN nodes, where it's the MIN player's turn to play. This is so that we optimize learning
+    to evaluate a position after we have played a move rather than before playing it, assuming we are the MAX player.
+    """
     # if reach final state return actual value
     if node.is_final():
         return node.reward()
@@ -49,16 +54,23 @@ def minimax(node: GameNode, depth: int, player: Literal['max', 'min'], heuristic
     if player == 'max':
         max_value = -math.inf
         for succ in node.successors():
-            max_value = max(max_value, minimax(succ, depth - 1, toggle_minimax_player(player), heuristic))
+            value = minimax(succ, depth - 1, toggle_minimax_player(player), heuristic)
+            max_value = max(max_value, value)
         return max_value
     else:
         min_value = math.inf
         for succ in node.successors():
-            min_value = min(min_value, minimax(succ, depth - 1, toggle_minimax_player(player), heuristic))
+            value = minimax(succ, depth, toggle_minimax_player(player), heuristic)
+            min_value = min(min_value, value)
         return min_value
 
 
 def alphabeta(node: GameNode, depth: int, player: Literal['max', 'min'], heuristic: Callable[[GameState], float], a: float = -math.inf, b: float = math.inf):
+    """
+    IMPORTANT: We only decrease the depth on MAX nodes, so that we always end the simulation on MIN nodes, i.e. we
+    call the heuristic on MIN nodes, where it's the MIN player's turn to play. This is so that we optimize learning
+    to evaluate a position after we have played a move rather than before playing it, assuming we are the MAX player.
+    """
     # if reach final state return actual value
     if node.is_final():
         return node.reward()
@@ -69,7 +81,8 @@ def alphabeta(node: GameNode, depth: int, player: Literal['max', 'min'], heurist
     if player == 'max':
         max_value = -math.inf
         for succ in node.successors():
-            max_value = max(max_value, alphabeta(succ, depth - 1, toggle_minimax_player(player), heuristic, a, b))
+            value = alphabeta(succ, depth - 1, toggle_minimax_player(player), heuristic, a, b)
+            max_value = max(max_value, value)
             a = max(a, max_value)      # fail-soft gives more info
             if max_value > b:          # better than the worst that min is guaranteed to be able to go for
                 break                  # prune this node entirely
@@ -77,7 +90,8 @@ def alphabeta(node: GameNode, depth: int, player: Literal['max', 'min'], heurist
     else:
         min_value = math.inf
         for succ in node.successors():
-            min_value = min(min_value, alphabeta(succ, depth - 1, toggle_minimax_player(player), heuristic, a, b))
+            value = alphabeta(succ, depth, toggle_minimax_player(player), heuristic, a, b)
+            min_value = min(min_value, value)
             b = min(b, min_value)      # fail-soft gives more info
             if min_value < a:          # better than the worst that max is guaranteed to be able to go for
                 break                  # prune this node entirely

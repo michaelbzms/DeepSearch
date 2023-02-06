@@ -42,6 +42,12 @@ class State(_State):
         """
         raise NotImplemented
 
+    def __str__(self):
+        """
+        Functionality to print the state as a string.
+        """
+        return super().__str__()
+
 
 class GameState(State):
     """
