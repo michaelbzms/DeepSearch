@@ -7,7 +7,6 @@ from deep_search.search.algorithms import GameNode, minimax, alphabeta
 
 
 if __name__ == '__main__':
-
     # start state
     s = ConnectFourState()
 
@@ -20,8 +19,6 @@ if __name__ == '__main__':
         ConnectFourAction(col=1, player=1),
         ConnectFourAction(col=4, player=2),
         ConnectFourAction(col=5, player=1),
-        ConnectFourAction(col=5, player=2),
-        ConnectFourAction(col=4, player=1),
         ConnectFourAction(col=5, player=2),
     ]
 
@@ -74,11 +71,11 @@ if __name__ == '__main__':
     print('Heuristic:', simple_connect4_heuristic(start_node.state))
 
     start = time.time()
-    value = minimax(start_node, depth=3, player='max', heuristic=simple_connect4_heuristic)
+    value, actions = minimax(start_node, depth=3, player='max', heuristic=simple_connect4_heuristic)
     end = time.time()
-    print(f'Minimax: {value}, time = {end - start} sec.')
+    print(f'Minimax: {value}, time = {end - start} sec, principal variation: {actions}')
 
     start = time.time()
-    value = alphabeta(start_node, depth=3, player='max', heuristic=simple_connect4_heuristic)
+    value, actions = alphabeta(start_node, depth=3, player='max', heuristic=simple_connect4_heuristic)
     end = time.time()
-    print(f'Alpha-beta: {value}, time = {end - start} sec.')
+    print(f'Alpha-beta: {value}, time = {end - start} sec, principal variation: {actions}')
