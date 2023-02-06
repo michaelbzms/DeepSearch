@@ -48,6 +48,12 @@ class State(_State):
         """
         return super().__str__()
 
+    def draw(self) -> None:
+        """
+        Overwrite for GUI or something.
+        """
+        print(str(self), end='\n\n')
+
 
 class GameState(State):
     """

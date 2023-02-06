@@ -3,6 +3,7 @@ from typing import Iterable
 import torch
 import numpy as np
 from numba import jit
+import pygame
 
 from deep_search.search.action import Action
 from deep_search.search.state import GameState
@@ -101,3 +102,31 @@ class ConnectFourState(GameState):
 
     def __str__(self) -> str:
         return str(self.board[::-1, :, 0] + 2 * self.board[::-1, :, 1])
+
+    def draw(self) -> None:
+        # Incorporated hastily from: https://www.askpython.com/python/examples/connect-four-game
+        pygame.init()
+        # define colors
+        BLUE = (4, 55, 225)
+        BLACK = (0, 0, 0)
+        RED = (255, 0, 0)
+        YELLOW = (255, 255, 0)
+        # define our screen size
+        SQUARESIZE = 100
+        # define width and height of board
+        width = self.ncols * SQUARESIZE
+        height = (self.nrows + 1) * SQUARESIZE
+        size = (width, height)
+        RADIUS = int(SQUARESIZE / 2 - 5)
+        screen = pygame.display.set_mode(size)
+        for c in range(self.ncols):
+            for r in range(self.nrows):
+                pygame.draw.rect(screen, BLUE, (c * SQUARESIZE, r * SQUARESIZE + SQUARESIZE, SQUARESIZE, SQUARESIZE))
+                pygame.draw.circle(screen, BLACK, (int(c * SQUARESIZE + SQUARESIZE / 2), int(r * SQUARESIZE + SQUARESIZE + SQUARESIZE / 2)), RADIUS)
+        for c in range(self.ncols):
+            for r in range(self.nrows):
+                if self.board[r, c, 0] == 1:
+                    pygame.draw.circle(screen, RED, (int(c * SQUARESIZE + SQUARESIZE / 2), height - int(r * SQUARESIZE + SQUARESIZE / 2)), RADIUS)
+                elif self.board[r, c, 1] == 1:
+                    pygame.draw.circle(screen, YELLOW, (int(c * SQUARESIZE + SQUARESIZE / 2), height - int(r * SQUARESIZE + SQUARESIZE / 2)), RADIUS)
+        pygame.display.update()

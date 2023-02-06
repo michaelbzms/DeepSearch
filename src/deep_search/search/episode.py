@@ -1,3 +1,4 @@
+import time
 from typing import Iterable
 
 from deep_search.search.agent import Agent, GameAgent
@@ -25,10 +26,11 @@ class Episode:
         if self.current_state.is_final():
             self.finished = True
 
-    def play_episode(self, verbose=True):
+    def play_episode(self, verbose=True, wait_sec: float = 1.0):
         for _ in range(self.max_depth):
             # agent(s) play in turn
             for i, agent in enumerate(self.agents):
+                start_t = time.time()
                 # decide action
                 action = agent.decide_action(self.current_state)
                 # play action
@@ -37,7 +39,11 @@ class Episode:
                 # print
                 if verbose:
                     print(f'Player {i + 1} played the move: {action}')
-                    print(new_state, end='\n\n')
+                    # draw state
+                    new_state.draw()
+                    # wait at least wait_sec amount of time
+                    while time.time() - start_t < wait_sec:
+                        time.sleep(start_t + wait_sec - time.time())
                 # check if done
                 if self.finished:
                     return
