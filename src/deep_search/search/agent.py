@@ -34,6 +34,6 @@ class AlphaBetaAgent(GameAgent):
             heuristic=self.heuristic
         )
         if self.verbose:
-            print(f'{self.player}-player calculated minimax value: {minimax_value}')
+            print(f'Player {self.player} calculated minimax value: {minimax_value}')
         # return first action of principal variation (i.e. what we should do under perfect play)
         return actions[0]

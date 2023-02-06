@@ -28,7 +28,7 @@ class Episode:
     def play_episode(self, verbose=True):
         for _ in range(self.max_depth):
             # agent(s) play in turn
-            for agent in self.agents:
+            for i, agent in enumerate(self.agents):
                 # decide action
                 action = agent.decide_action(self.current_state)
                 # play action
@@ -36,7 +36,8 @@ class Episode:
                 self.add_state(new_state)
                 # print
                 if verbose:
-                    print(new_state)
+                    print(f'Player {i + 1} played the move: {action}')
+                    print(new_state, end='\n\n')
                 # check if done
                 if self.finished:
                     return

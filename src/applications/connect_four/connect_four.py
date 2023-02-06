@@ -13,6 +13,9 @@ class ConnectFourAction(Action):
     col: int
     player: int
 
+    def __str__(self):
+        return f'{self.col+1}'
+
 
 @jit(nopython=True)
 def calc_winner_numba(nrows: int, ncols: int, connect_num: int, board: np.ndarray, top: np.ndarray) -> int:
@@ -97,4 +100,4 @@ class ConnectFourState(GameState):
         return torch.FloatTensor(self.board)
 
     def __str__(self) -> str:
-        return str(self.board[::-1, :, 0] - self.board[::-1, :, 1])
+        return str(self.board[::-1, :, 0] + 2 * self.board[::-1, :, 1])
