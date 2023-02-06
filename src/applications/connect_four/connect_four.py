@@ -2,6 +2,7 @@ from dataclasses import dataclass
 from typing import Iterable
 import torch
 import numpy as np
+from numba import jit
 
 from deep_search.search.action import Action
 from deep_search.search.state import GameState
@@ -11,6 +12,29 @@ from deep_search.search.state import GameState
 class ConnectFourAction(Action):
     col: int
     player: int
+
+
+@jit(nopython=True)
+def calc_winner_numba(nrows: int, ncols: int, connect_num: int, board: np.ndarray, top: np.ndarray) -> int:
+    # TODO: test
+    for player_no in range(1, 3):
+        for j in range(ncols):
+            for i in range(top[j]):
+                # horizontal
+                space_right = j <= ncols - connect_num
+                if space_right and board[i, j: j + connect_num, player_no - 1].sum() == connect_num:
+                    return player_no
+                # vertical
+                space_up = i <= nrows - connect_num
+                if space_up and top[j] - i >= connect_num and board[i: i + connect_num, j, player_no - 1].sum() == connect_num:
+                    return player_no
+                # diagonal
+                if space_right and space_up and (
+                        (board[i: i + connect_num, j: j + connect_num, player_no - 1] * np.eye(4)).sum() == connect_num
+                        or
+                        (np.fliplr(board[i: i + connect_num, j: j + connect_num, player_no - 1]) * np.eye(4)).sum() == connect_num):
+                    return player_no
+    return 0
 
 
 class ConnectFourState(GameState):
@@ -38,26 +62,7 @@ class ConnectFourState(GameState):
         self.winner = self._calc_winner()
 
     def _calc_winner(self) -> int:
-        # TODO: test
-        for player_no in (1, 2):
-            for j in range(self.ncols):
-                for i in range(self.top[j]):
-                    # horizontal
-                    space_right = j <= self.ncols - self.connect_num
-                    if space_right and self.board[i, j: j + self.connect_num, player_no - 1].sum() == self.connect_num:
-                        return player_no
-                    # vertical
-                    space_up = i <= self.nrows - self.connect_num
-                    if space_up and self.top[j] - i >= self.connect_num and self.board[i: i + self.connect_num, j, player_no - 1].sum() == self.connect_num:
-                        return player_no
-                    # diagonal
-                    if space_right and space_up and (
-                        self.board[i: i + self.connect_num, j: j + self.connect_num, player_no - 1].trace() == self.connect_num
-                        or
-                        np.fliplr(self.board[i: i + self.connect_num, j: j + self.connect_num, player_no - 1]).trace() == self.connect_num
-                    ):
-                        return player_no
-        return 0
+        return calc_winner_numba(self.nrows, self.ncols, self.connect_num, self.board, self.top)
 
     def get_possible_actions(self) -> Iterable[ConnectFourAction]:
         for i in range(self.ncols):
