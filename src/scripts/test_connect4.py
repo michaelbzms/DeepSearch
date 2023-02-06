@@ -1,5 +1,6 @@
 import numpy as np
 import time
+from numba import jit
 
 from applications.connect_four.connect_four import ConnectFourState, ConnectFourAction
 from deep_search.search.algorithms import GameNode, minimax, alphabeta
@@ -29,45 +30,51 @@ if __name__ == '__main__':
     depth = 3
 
 
+    @jit(nopython=True)
+    def check_board(board: np.ndarray, player_no: int) -> float:
+        max_cons: int = 0
+        for i in range(board.shape[0]):
+            for j in range(board.shape[1]):
+                # max consecutive horizontal
+                k = 0
+                while j + k < board.shape[1] and board[i, j + k, player_no] == 1:
+                    k += 1
+                max_cons = max(max_cons, k)
+                # vertical
+                k = 0
+                while i + k < board.shape[0] and board[i + k, j, player_no] == 1:
+                    k += 1
+                max_cons = max(max_cons, k)
+                # diagonal
+                k = 0
+                while j + k < board.shape[1] and i + k < board.shape[0] and board[i + k, j + k, player_no] == 1:
+                    k += 1
+                max_cons = max(max_cons, k)
+                k = 0
+                while j - k >= 0 and i + k < board.shape[0] and board[i + k, j - k, player_no] == 1:
+                    k += 1
+                max_cons = max(max_cons, k)
+        return max_cons
+
+
     def simple_connect4_heuristic(s: ConnectFourState) -> float:
         """
         Return the difference between our max consecutive squares and theirs as an eval.
-        TODO: Speed-up?
         TODO: Heuristic should take into account whose turn it is to play.. here we assume it is MIN's.
         """
-        max_cons = np.array([0, 0])
+        max_cons = [0, 0]
         for player_no in range(2):
-            for i in range(s.board.shape[0]):
-                for j in range(s.board.shape[1]):
-                    # max consecutive horizontal
-                    k = 0
-                    while j + k < s.board.shape[1] and s.board[i, j + k, player_no] == 1:
-                        k += 1
-                    max_cons[player_no] = max(max_cons[player_no], k)
-                    # vertical
-                    k = 0
-                    while i + k < s.board.shape[0] and s.board[i + k, j, player_no] == 1:
-                        k += 1
-                    max_cons[player_no] = max(max_cons[player_no], k)
-                    # diagonal
-                    k = 0
-                    while j + k < s.board.shape[1] and i + k < s.board.shape[0] and s.board[i + k, j + k, player_no] == 1:
-                        k += 1
-                    max_cons[player_no] = max(max_cons[player_no], k)
-                    k = 0
-                    while j - k >= 0 and i + k < s.board.shape[0] and s.board[i + k, j - k, player_no] == 1:
-                        k += 1
-                    max_cons[player_no] = max(max_cons[player_no], k)
+            max_cons[player_no] = check_board(s.board, player_no)
         return max_cons[0] - max_cons[1]
 
     print('Heuristic:', simple_connect4_heuristic(start_node.state))
 
     start = time.time()
-    value = minimax(start_node, depth=2, player=1, heuristic=simple_connect4_heuristic)
+    value = minimax(start_node, depth=3, player=1, heuristic=simple_connect4_heuristic)
     end = time.time()
     print(f'Minimax: {value}, time = {end - start} sec.')
 
     start = time.time()
-    value = alphabeta(start_node, depth=2, player=1, heuristic=simple_connect4_heuristic)
+    value = alphabeta(start_node, depth=3, player=1, heuristic=simple_connect4_heuristic)
     end = time.time()
     print(f'Alpha-beta: {value}, time = {end - start} sec.')
