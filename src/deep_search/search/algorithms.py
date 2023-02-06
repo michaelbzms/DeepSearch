@@ -32,6 +32,8 @@ class GameNode(Node):
             return +1.0
         elif winner == 2:
             return -1.0
+        elif winner == 0:   # draw
+            return 0.0
         else:
             raise ValueError('Could not recognize the winner.')
 
@@ -59,7 +61,7 @@ def minimax(node: GameNode, depth: int, player: Literal['max', 'min'], heuristic
             value, actions = minimax(succ, depth - 1, toggle_minimax_player(player), heuristic)
             if value > max_value:
                 max_value = value
-                max_actions = actions + [action]
+                max_actions = [action] + actions
         return max_value, max_actions
     else:
         min_value = math.inf
@@ -68,7 +70,7 @@ def minimax(node: GameNode, depth: int, player: Literal['max', 'min'], heuristic
             value, actions = minimax(succ, depth, toggle_minimax_player(player), heuristic)
             if value < min_value:
                 min_value = value
-                min_actions = actions + [action]
+                min_actions = [action] + actions
         return min_value, min_actions
 
 
@@ -92,7 +94,7 @@ def alphabeta(node: GameNode, depth: int, player: Literal['max', 'min'], heurist
             value, actions = alphabeta(succ, depth - 1, toggle_minimax_player(player), heuristic, a, b)
             if value > max_value:
                 max_value = value
-                max_actions = actions + [action]
+                max_actions = [action] + actions
             a = max(a, max_value)      # fail-soft gives more info
             if max_value > b:          # better than the worst that min is guaranteed to be able to go for
                 break                  # prune this node entirely
@@ -104,7 +106,7 @@ def alphabeta(node: GameNode, depth: int, player: Literal['max', 'min'], heurist
             value, actions = alphabeta(succ, depth, toggle_minimax_player(player), heuristic, a, b)
             if value < min_value:
                 min_value = value
-                min_actions = actions + [action]
+                min_actions = [action] + actions
             b = min(b, min_value)      # fail-soft gives more info
             if min_value < a:          # better than the worst that max is guaranteed to be able to go for
                 break                  # prune this node entirely

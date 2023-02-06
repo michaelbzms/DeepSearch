@@ -1,6 +1,6 @@
 from typing import Iterable
 
-from deep_search.search.agent import Agent
+from deep_search.search.agent import Agent, GameAgent
 from deep_search.search.state import State, GameState
 
 
@@ -25,7 +25,7 @@ class Episode:
         if self.current_state.is_final():
             self.finished = True
 
-    def play_episode(self):
+    def play_episode(self, verbose=True):
         for _ in range(self.max_depth):
             # agent(s) play in turn
             for agent in self.agents:
@@ -34,6 +34,9 @@ class Episode:
                 # play action
                 new_state: State = self.current_state.get_next_state(action)
                 self.add_state(new_state)
+                # print
+                if verbose:
+                    print(new_state)
                 # check if done
                 if self.finished:
                     return
@@ -60,7 +63,7 @@ class TwoPlayerGameEpisode(Episode):
     """
     An episode for a two-player game.
     """
-    def __init__(self, starting_state: GameState, *agents: Iterable[Agent]):
+    def __init__(self, starting_state: GameState, *agents: Iterable[GameAgent]):
         super().__init__(starting_state, *agents)
         if len(agents) != 2:
             raise ValueError('We need exactly 2 agents to play a two-player game.')

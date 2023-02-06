@@ -34,7 +34,7 @@ def calc_winner_numba(nrows: int, ncols: int, connect_num: int, board: np.ndarra
                         or
                         (np.fliplr(board[i: i + connect_num, j: j + connect_num, player_no - 1]) * np.eye(4)).sum() == connect_num):
                     return player_no
-    return 0
+    return 0   # no winner yet or draw
 
 
 class ConnectFourState(GameState):
@@ -78,7 +78,9 @@ class ConnectFourState(GameState):
         return ConnectFourState(board=new_board, turn=self._toggle_turn(self.turn))
 
     def is_final(self) -> bool:
-        return self.get_winner() != 0
+        if self.get_winner() != 0:
+            return True
+        return np.all(self.board.sum(axis=-1) != 0)  # no empty squares
 
     def get_player_turn(self) -> int:
         return self.turn
