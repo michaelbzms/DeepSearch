@@ -49,14 +49,14 @@ class GameState(State):
     """
 
     @abstractmethod
-    def get_player_turn(self) -> any:
+    def get_player_turn(self) -> int:
         """
         Returns the number of the player whose turn it is to play.
         """
         raise NotImplemented
 
     @abstractmethod
-    def get_winner(self) -> any:
+    def get_winner(self) -> int:
         """
         Returns the number of the winning player
         """

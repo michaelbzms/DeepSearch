@@ -32,7 +32,7 @@ class ConnectFourState(GameState):
         else:
             self.board = np.zeros((self.nrows, self.ncols, 2), dtype=np.int8)
         # the row that is next for play on each column
-        self.top = self.board.sum(axis=-1).sum(axis=-1)   # sum the last two axis
+        self.top = self.board.sum(axis=-1).sum(axis=0)
         # player turn
         self.turn = turn
         # determine if there is a winner
@@ -61,11 +61,9 @@ class ConnectFourState(GameState):
         return 0
 
     def get_possible_actions(self) -> Iterable[ConnectFourAction]:
-        return [
-            ConnectFourAction(row=self.top[i], col=i, player=self.turn)
-            for i in range(self.ncols)
-            if self.top[i] < self.nrows
-        ]
+        for i in range(self.ncols):
+            if self.top[i] < self.nrows:
+                yield ConnectFourAction(row=self.top[i], col=i, player=self.turn)
 
     def get_next_state(self, action: ConnectFourAction) -> GameState:
         x, y = action.row, action.col
