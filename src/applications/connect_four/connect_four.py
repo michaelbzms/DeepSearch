@@ -3,7 +3,6 @@ from typing import Iterable
 import torch
 import numpy as np
 from numba import jit
-import pygame
 
 from deep_search.search.action import Action
 from deep_search.search.state import GameState
@@ -20,7 +19,6 @@ class ConnectFourAction(Action):
 
 @jit(nopython=True)
 def calc_winner_numba(nrows: int, ncols: int, connect_num: int, board: np.ndarray, top: np.ndarray) -> int:
-    # TODO: test
     for player_no in range(1, 3):
         for j in range(ncols):
             for i in range(top[j]):
@@ -103,7 +101,17 @@ class ConnectFourState(GameState):
     def __str__(self) -> str:
         return str(self.board[::-1, :, 0] + 2 * self.board[::-1, :, 1])
 
+    def __eq__(self, other):
+        return self.__id() == other.__id()
+
+    def __id(self):
+        return np.packbits(self.board).tobytes()
+
+    def __hash__(self) -> int:
+        return hash(self.__id())
+
     def draw(self) -> None:
+        import pygame
         # Incorporated hastily from: https://www.askpython.com/python/examples/connect-four-game
         pygame.init()
         # define colors

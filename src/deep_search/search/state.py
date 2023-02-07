@@ -48,6 +48,19 @@ class State(_State):
         """
         return super().__str__()
 
+    @abstractmethod
+    def __eq__(self, other):
+        """
+        Overwrite to be able to compare states for equality.
+        """
+        raise NotImplemented
+
+    def __hash__(self) -> int:
+        """
+        Overwrite for efficient hashing.
+        """
+        return super().__hash__()
+
     def draw(self) -> None:
         """
         Overwrite for GUI or something.
