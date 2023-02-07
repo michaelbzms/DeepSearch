@@ -1,4 +1,5 @@
 from abc import ABC, abstractmethod
+import random
 from typing import Callable
 
 from deep_search.search.action import Action
@@ -18,11 +19,18 @@ class GameAgent(Agent):
         raise NotImplemented
 
 
+class RandomAgent(Agent):
+    def decide_action(self, state: GameState) -> Action:
+        possible_actions = state.get_possible_actions()
+        return random.choice(list(possible_actions))
+
+
 class AlphaBetaAgent(GameAgent):
-    def __init__(self, depth: int, player: int, heuristic: Callable[[GameState], float], verbose=True):
+    def __init__(self, depth: int, player: int, heuristic: Callable[[GameState], float], use_tt=True, verbose=True):
         self.depth = depth
         self.player = 'max' if player == 1 else 'min'
         self.heuristic = heuristic
+        self.use_tt = use_tt
         self.verbose = verbose
 
     def decide_action(self, state: GameState) -> Action:
@@ -31,7 +39,8 @@ class AlphaBetaAgent(GameAgent):
             node=GameNode(state),
             depth=self.depth,
             player=self.player,
-            heuristic=self.heuristic
+            heuristic=self.heuristic,
+            transposition_table={} if self.use_tt else None
         )
         if self.verbose:
             print(f'Player {self.player} calculated minimax value: {minimax_value}')
