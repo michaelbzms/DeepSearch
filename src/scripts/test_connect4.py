@@ -37,6 +37,16 @@ if __name__ == '__main__':
     print(f'Minimax: {value}, time = {end - start} sec, principal variation: {actions}')
 
     start = time.time()
+    value, actions = minimax(start_node, depth=3, player='max', heuristic=max_consecutive_squares_eval, transposition_table=dict())
+    end = time.time()
+    print(f'Minimax+TT: {value}, time = {end - start} sec, principal variation: {actions}')
+
+    start = time.time()
     value, actions = alphabeta(start_node, depth=3, player='max', heuristic=max_consecutive_squares_eval)
     end = time.time()
     print(f'Alpha-beta: {value}, time = {end - start} sec, principal variation: {actions}')
+
+    start = time.time()
+    value, actions = alphabeta(start_node, depth=3, player='max', heuristic=max_consecutive_squares_eval, transposition_table=dict())
+    end = time.time()
+    print(f'Alpha-beta+TT: {value}, time = {end - start} sec, principal variation: {actions}')
