@@ -13,7 +13,7 @@ if __name__ == '__main__':
 
     # player 2
     # player2 = AlphaBetaAgent(depth=3, player=2, heuristic=max_consecutive_squares_eval)
-    player2 =RandomAgent()
+    player2 = RandomAgent()
 
     # episode
     episode = TwoPlayerGameEpisode(start, player1, player2)
