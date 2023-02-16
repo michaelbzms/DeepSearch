@@ -34,6 +34,7 @@ class DeepHeuristic(Callable[[GameState], float]):
     def step(self, states: Iterable[GameState], target_values: Iterable[float]) -> float:
         if not self.train:
             raise ValueError('Not on train mode.')
+        self.value_network.train()
         # create batch
         x = torch.stack([s.get_representation() for s in states]).to(self.device)  # TODO: check -> should be +1 dim with batch first
         y_true = torch.FloatTensor(list(target_values)).to(self.device)
@@ -48,7 +49,9 @@ class DeepHeuristic(Callable[[GameState], float]):
         self.optimizer.step()
         return loss.detach().cpu().item()
 
+    @torch.no_grad()
     def __call__(self, state: GameState) -> float:
+        self.value_network.eval()
         return self.value_network(state.get_representation(), with_sigmoid=True)
 
     def save(self, file: str):

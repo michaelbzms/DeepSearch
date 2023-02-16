@@ -71,3 +71,17 @@ class ImitationLearning:
         # learn from the transposition table
         loss = self.student.step(explored_tt.keys(), explored_tt.values())
         return loss
+
+
+class TDLearning(ImitationLearning):
+    """
+    Special case where the teacher is our self as in TD learning!
+    """
+    def __init__(self,
+                 agent1: GameAgent,
+                 agent2: GameAgent,
+                 deep_heuristic: DeepHeuristic,
+                 minimax_depth: int = 3,
+                 output_student_file: str = '../../models/student.pt',
+                 max_game_turns=10000):
+        super(TDLearning, self).__init__(agent1, agent2, deep_heuristic, deep_heuristic, minimax_depth, output_student_file, max_game_turns)
