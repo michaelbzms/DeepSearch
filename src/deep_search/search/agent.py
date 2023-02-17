@@ -21,8 +21,8 @@ class GameAgent(Agent):
 
 class RandomAgent(Agent):
     def decide_action(self, state: GameState) -> Action:
-        possible_actions = state.get_possible_actions()
-        return random.choice(list(possible_actions))
+        possible_actions = list(state.get_possible_actions())
+        return random.choice(possible_actions) if len(possible_actions) > 0 else None
 
 
 class AlphaBetaAgent(GameAgent):

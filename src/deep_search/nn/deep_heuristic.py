@@ -14,6 +14,11 @@ class GameNetwork(nn.Module):
     def forward(self, state_rep: torch.Tensor, with_sigmoid: bool = True):
         raise NotImplemented
 
+    @abstractmethod
+    def get_model_parameters(self):
+        """ Parameters to save along with the model. """
+        raise NotImplemented
+
 
 class DeepHeuristic(Callable[[GameState], float]):
     def __init__(self, value_network: GameNetwork, train: bool = False, **kwargs):
@@ -35,6 +40,8 @@ class DeepHeuristic(Callable[[GameState], float]):
         if not self.train:
             raise ValueError('Not on train mode.')
         self.value_network.train()
+        if len(target_values) == 0:
+            return None
         # create batch
         x = torch.stack([s.get_representation() for s in states]).to(self.device)  # TODO: check -> should be +1 dim with batch first
         y_true = torch.FloatTensor(list(target_values)).to(self.device)
@@ -43,7 +50,7 @@ class DeepHeuristic(Callable[[GameState], float]):
         # forward
         y_pred = self.value_network(x, with_sigmoid=False)
         # calculate loss & backpropagate
-        loss = self.loss_fn(y_pred, y_true)
+        loss = self.loss_fn(y_pred.squeeze(-1), y_true)
         loss.backward()
         # update weights
         self.optimizer.step()

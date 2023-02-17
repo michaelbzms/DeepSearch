@@ -38,21 +38,26 @@ class ImitationLearning:
         try:
             pbar = tqdm(range(num_episodes))
             for _ in pbar:
-                self.play_episode(starting_state, pbar)
+                self._play_episode(starting_state, pbar)
         except KeyboardInterrupt:
             print('Training interrupted.')
         self.student.save(self.output_student_file)
         print('Saved network to', self.output_student_file)
 
-    def play_episode(self, starting_state: GameState, pbar: any):
+    def _play_episode(self, starting_state: GameState, pbar: any):
         current_state = starting_state
         for _ in range(self.max_game_turns):
             for agent in [self.agent1, self.agent2]:
+                if current_state.is_final():
+                    return
                 # learn to evaluate this state from the teacher
                 loss = self.treestrap_from_state(current_state)
                 pbar.set_description(f'Loss: {loss:.4f}')
                 # decide action
                 action = agent.decide_action(current_state)
+                if action is None:
+                    print(current_state)
+                    raise ValueError('Run out of actions')
                 # play action decided by agent
                 current_state: GameState = current_state.get_next_state(action)
 
@@ -67,9 +72,9 @@ class ImitationLearning:
             transposition_table=explored_tt
         )
         # add root to transposition table (not there by default)
-        explored_tt[state] = root_value
+        explored_tt[state] = (root_value, principal_variation)
         # learn from the transposition table
-        loss = self.student.step(explored_tt.keys(), explored_tt.values())
+        loss = self.student.step(explored_tt.keys(), [v for v, _ in explored_tt.values()])
         return loss
 
 

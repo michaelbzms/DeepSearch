@@ -33,6 +33,9 @@ class Episode:
                 start_t = time.time()
                 # decide action
                 action = agent.decide_action(self.current_state)
+                if action is None:
+                    print(self.current_state)
+                    raise ValueError('Run out of actions')
                 # play action
                 new_state: State = self.current_state.get_next_state(action)
                 self.add_state(new_state)

@@ -96,7 +96,7 @@ class ConnectFourState(GameState):
     def get_representation(self) -> torch.Tensor:
         """ Use the 3d board itself with players being different channels. """
         # For 2d version: return torch.FloatTensor(np.vstack((self.board[:, :, 0], self.board[:, :, 1]))
-        return torch.FloatTensor(self.board)
+        return torch.FloatTensor(self.board).permute(2, 0, 1)
 
     def __str__(self) -> str:
         return str(self.board[::-1, :, 0] + 2 * self.board[::-1, :, 1])
