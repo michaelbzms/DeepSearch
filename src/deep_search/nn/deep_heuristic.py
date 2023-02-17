@@ -78,7 +78,7 @@ class DeepHeuristic(Callable[[GameState], float]):
     @torch.no_grad()
     def __call__(self, state: GameState) -> float:
         self.value_network.eval()
-        return self.value_network(state.get_representation(), with_sigmoid=True)
+        return self.value_network(state.get_representation().unsqueeze(0).to(self.device), with_sigmoid=True).item()
 
     def save(self, file: str):
         torch.save([self.value_network.state_dict(), self.value_network.get_model_parameters()], file)

@@ -26,7 +26,6 @@ class ImitationLearning:
         actions should adapt on the network that is being trained (on-policy).
 
         TODO:
-            - Log progress to wandb.
             - Evaluation of student other than train loss?
             - Keep old values in a replay buffer and mix (e.g. sample from old) with new to avoid catastrophic forgetting.
         """

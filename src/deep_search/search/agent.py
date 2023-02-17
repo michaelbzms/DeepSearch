@@ -19,7 +19,7 @@ class GameAgent(Agent):
         raise NotImplemented
 
 
-class RandomAgent(Agent):
+class RandomAgent(GameAgent):
     def decide_action(self, state: GameState) -> Action:
         possible_actions = list(state.get_possible_actions())
         return random.choice(possible_actions) if len(possible_actions) > 0 else None
