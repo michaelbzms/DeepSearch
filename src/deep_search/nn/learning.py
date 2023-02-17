@@ -1,4 +1,7 @@
+import sys
 from typing import Callable
+
+import numpy as np
 from tqdm import tqdm
 
 from deep_search.nn.deep_heuristic import DeepHeuristic
@@ -15,7 +18,8 @@ class ImitationLearning:
                  teacher: Callable[[GameState], float],
                  minimax_depth: int = 3,
                  output_student_file: str = '../../models/student.pt',
-                 max_game_turns=10000):
+                 max_game_turns=10000,
+                 wandb: any or None = None):
         """
         Agents should not be deterministic! Their role is to dynamically explore different states and
         learn to evaluate them from the teacher. They should either be random (off-policy) or their
@@ -33,33 +37,77 @@ class ImitationLearning:
         self.minimax_depth = minimax_depth
         self.output_student_file = output_student_file
         self.max_game_turns = max_game_turns
+        self.wandb = wandb
 
-    def play_episodes(self, starting_state: GameState, num_episodes: int):
+    def play_episodes(self, starting_state: GameState, num_episodes: int, k=100):
         try:
-            pbar = tqdm(range(num_episodes))
-            for _ in pbar:
-                self._play_episode(starting_state, pbar)
+            last_k_losses = []
+            k_idx = 0
+            pbar = tqdm(range(num_episodes), total=num_episodes, file=sys.stdout)
+            # for every game
+            for episode_num in pbar:
+                current_state = starting_state
+                game_finished = False
+                # for every turn
+                for _ in range(self.max_game_turns):
+                    # check stop
+                    if game_finished:
+                        break
+                    # for every agent
+                    for agent in [self.agent1, self.agent2]:
+                        # check stop
+                        if current_state.is_final():
+                            game_finished = True
+                            break
+
+                        # learn to evaluate this state from the teacher
+                        loss, batch_sizes = self.treestrap_from_state(current_state)
+                        if loss is None:
+                            # nothing to learn, small batch of states (< min_batch_size), might as well finish
+                            game_finished = True
+                            break
+
+                        # update progress bar
+                        pbar.set_description(f'Loss: {loss:.4f}')
+
+                        # keep track of last k losses
+                        if len(last_k_losses) < k - 1:
+                            last_k_losses.append(loss)
+                        elif len(last_k_losses) == k - 1:
+                            last_k_losses.append(loss)
+                            last_k_losses = np.array(last_k_losses)
+                        else:
+                            last_k_losses[k_idx] = loss   # overwrite oldest
+                            k_idx = (k_idx + 1) % k
+
+                        # log progress
+                        self._log_wandb({
+                            'loss': loss,
+                            f'loss_MA@{k}': np.mean(last_k_losses),
+                            'episode_num': episode_num,
+                            'avg_batch_size': np.mean(batch_sizes),
+                            'min_batch_size': np.min(batch_sizes),
+                        })
+
+                        # decide action
+                        action = agent.decide_action(current_state)
+                        if action is None:
+                            print(current_state)
+                            raise ValueError('Run out of actions')
+
+                        # play action decided by agent
+                        current_state: GameState = current_state.get_next_state(action)
+
         except KeyboardInterrupt:
             print('Training interrupted.')
+
+        # save model
         self.student.save(self.output_student_file)
         print('Saved network to', self.output_student_file)
 
-    def _play_episode(self, starting_state: GameState, pbar: any):
-        current_state = starting_state
-        for _ in range(self.max_game_turns):
-            for agent in [self.agent1, self.agent2]:
-                if current_state.is_final():
-                    return
-                # learn to evaluate this state from the teacher
-                loss = self.treestrap_from_state(current_state)
-                pbar.set_description(f'Loss: {loss:.4f}')
-                # decide action
-                action = agent.decide_action(current_state)
-                if action is None:
-                    print(current_state)
-                    raise ValueError('Run out of actions')
-                # play action decided by agent
-                current_state: GameState = current_state.get_next_state(action)
+    def _log_wandb(self, metrics: dict):
+        if self.wandb is not None:
+            self.wandb.log(metrics)
 
     def treestrap_from_state(self, state: GameState) -> float:
         # perform minimax and fill up the transposition table
@@ -73,9 +121,11 @@ class ImitationLearning:
         )
         # add root to transposition table (not there by default)
         explored_tt[state] = (root_value, principal_variation)
+        if len(explored_tt) <= 1:
+            raise ValueError('Found no states?')
         # learn from the transposition table
-        loss = self.student.step(explored_tt.keys(), [v for v, _ in explored_tt.values()])
-        return loss
+        loss, batch_sizes = self.student.step(explored_tt.keys(), [v for v, _ in explored_tt.values()])
+        return loss, batch_sizes
 
 
 class TDLearning(ImitationLearning):
