@@ -1,5 +1,5 @@
 from applications.connect_four.connect_four import ConnectFourState
-from applications.connect_four.heuristics import total_consecutive_squares_eval
+from applications.connect_four.heuristics import total_consecutive_squares_eval, max_consecutive_squares_eval
 from applications.connect_four.models import BasicCNN
 from deep_search.nn.deep_heuristic import DeepHeuristic
 from deep_search.nn.learning import ImitationLearning
@@ -8,11 +8,11 @@ import wandb
 
 
 # TODO: move params to a yaml config file
-num_episodes = 100
+num_episodes = 1000
 log_wandb = True
 project_name = 'DeepSearch for Connect4'
 entity = 'michaelbzms'
-run_name = 'Test'
+run_name = 'TD learning from self'
 
 
 if __name__ == '__main__':
@@ -28,8 +28,8 @@ if __name__ == '__main__':
     model = DeepHeuristic(
         value_network=net,
         train=True,
-        lr=3e-4,
-        weight_decay=1e-6
+        lr=3e-5,
+        weight_decay=0.0
     )
 
     # starting state
@@ -56,8 +56,8 @@ if __name__ == '__main__':
             agent1=p1,
             agent2=p2,
             student=model,
-            teacher=total_consecutive_squares_eval,    # learn from this heuristic
-            minimax_depth=3,
+            teacher=model,    # learn from this heuristic
+            minimax_depth=2,
             output_student_file='../../models/test_student.pt',
             wandb=wandb if log_wandb else None
         )

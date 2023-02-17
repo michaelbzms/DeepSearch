@@ -57,8 +57,8 @@ class DeepHeuristic(Callable[[GameState], float]):
         idx_order = np.arange(len(x))
         np.random.shuffle(idx_order)
         # split in max_batch_size sized batches
-        loss = None
         batch_sizes = []
+        losses = []
         for i in range(0, len(x), self.max_batch_size):
             if len(x) - i < self.min_batch_size:
                 break
@@ -67,13 +67,22 @@ class DeepHeuristic(Callable[[GameState], float]):
             # forward
             y_pred = self.value_network(x[idx_order[i: i + self.max_batch_size].tolist()], with_sigmoid=False)
             # calculate loss & backpropagate
-            loss = self.loss_fn(y_pred.squeeze(-1), y_true[idx_order[i: i + self.max_batch_size].tolist()])
+            target = y_true[idx_order[i: i + self.max_batch_size].tolist()]
+            # give higher weight to end game values over uncertain evaluations
+            self.loss_fn.weight = torch.FloatTensor([10 if t == 1.0 or t == 0.0 else 1 for t in target]).to(self.device)
+            loss = self.loss_fn(y_pred.squeeze(-1), target)
             loss.backward()
+            # keep track of original unweighted loss as progress
+            with torch.no_grad():
+                self.loss_fn.weight = None
+                loss = self.loss_fn(y_pred.squeeze(-1), target)
+                losses.append(loss.detach().cpu().item())
             # update weights
             self.optimizer.step()
             # keep track
             batch_sizes.append(len(y_pred))
-        return loss.detach().cpu().item() if loss is not None else None, batch_sizes
+        avg_loss = np.mean(losses) if len(losses) > 0 else None
+        return avg_loss, batch_sizes
 
     @torch.no_grad()
     def __call__(self, state: GameState) -> float:
