@@ -31,9 +31,9 @@ class GameNode(Node):
         elif winner == 1:
             return +1.0
         elif winner == 2:
-            return -1.0
-        elif winner == 0:   # draw
             return 0.0
+        elif winner == 0:   # draw
+            return 0.5
         else:
             raise ValueError('Could not recognize the winner.')
 

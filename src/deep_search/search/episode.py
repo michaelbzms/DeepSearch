@@ -42,6 +42,7 @@ class Episode:
                 # print
                 if verbose:
                     print(f'Player {i + 1} played the move: {action}')
+                    print(new_state)
                     # draw state
                     new_state.draw()
                     # wait at least wait_sec amount of time

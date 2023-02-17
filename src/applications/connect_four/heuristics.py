@@ -5,7 +5,13 @@ from applications.connect_four.connect_four import ConnectFourState
 
 
 @jit(nopython=True)
+def sigmoid(x: float):
+    return 1 / (1 + np.exp(-x))
+
+
+@jit(nopython=True)
 def max_consecutive_squares(board: np.ndarray, player_no: int) -> float:
+    scale = 2
     max_cons: int = 0
     for i in range(board.shape[0]):
         for j in range(board.shape[1]):
@@ -28,7 +34,7 @@ def max_consecutive_squares(board: np.ndarray, player_no: int) -> float:
             while j - k >= 0 and i + k < board.shape[0] and board[i + k, j - k, player_no] == 1:
                 k += 1
             max_cons = max(max_cons, k)
-    return max_cons
+    return max_cons ** scale
 
 
 @jit(nopython=True)
@@ -74,15 +80,15 @@ def max_consecutive_squares_eval(s: ConnectFourState) -> float:
     max_cons = [0, 0]
     for player_no in range(2):
         max_cons[player_no] = max_consecutive_squares(s.board, player_no)
-    return (max_cons[0] - max_cons[1] + turn_bonus) / 16  # so that it is in [-1, 1]
+    return (1 + (max_cons[0] - max_cons[1] + turn_bonus) / 16) / 2  # so that it is in [0, 1]
 
 
 def total_consecutive_squares_eval(s: ConnectFourState) -> float:
     """
     Return the difference between our total consecutive squares and theirs but squeshed in [-1, 1] as an eval.
     """
-    turn_bonus = 1.0 if s.turn == 1 else -1.0
+    turn_bonus = 1.0 if s.turn == 1 else -1.0  # TODO: not good enough
     total_cons = [0, 0]
     for player_no in range(2):
         total_cons[player_no] = total_consecutive_squares(s.board, player_no)
-    return np.tanh((total_cons[0] - total_cons[1] + turn_bonus) * 0.1)    # so that it is in [-1, 1]
+    return sigmoid((total_cons[0] - total_cons[1] + turn_bonus) * 0.1)    # so that it is in [0, 1]
