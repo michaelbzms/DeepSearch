@@ -6,6 +6,9 @@ from deep_search.nn.util import load_yaml_conf
 
 
 if __name__ == '__main__':
+    import torch
+    torch.autograd.set_detect_anomaly(True)
+
     # read config
     config = load_yaml_conf('../config/supervised_training.yaml')
 

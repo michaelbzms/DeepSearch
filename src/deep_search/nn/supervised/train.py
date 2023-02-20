@@ -76,12 +76,13 @@ class Trainer:
                 print(f'Val loss: {val_loss: .4f}, Val accuracy: {100 * val_acc: .2f}',)
 
                 # log wandb
-                self._log_wandb({
-                    'train_loss': train_loss,
-                    'train_acc': train_acc,
-                    'val_loss': val_loss,
-                    'val_acc': val_acc,
-                })
+                if self.wandb:
+                    self._log_wandb({
+                        'train_loss': train_loss,
+                        'train_acc': train_acc,
+                        'val_loss': val_loss,
+                        'val_acc': val_acc,
+                    })
 
                 # early stop update
                 save_checkpoint, stop = self._early_stop_update(val_loss, val_acc, epoch)
@@ -113,22 +114,25 @@ class Trainer:
         train_sum_loss = 0.0
         correct = 0
         self.model.train()
-        for batch in tqdm(train_loader, desc='Training', file=sys.stdout):
+        for batch_num, batch in (pbar := tqdm(enumerate(train_loader), desc='Training', total=len(train_loader), file=sys.stdout)):
             x, y_true = batch
             # reset the gradients
             self.optimizer.zero_grad()
             # forward model
-            y_pred = self.model(x.to(self.device))
+            y_pred = self.model(x.to(self.device), with_sigmoid=False)
             # calculate loss
             loss = self.criterion(y_pred, y_true.to(self.device).view(-1, 1))
             # calculate classification metrics
-            correct += torch.eq(y_pred, y_true.to(self.device).view(-1, 1)).type(torch.int).sum()
+            correct += torch.eq(torch.sigmoid(y_pred) >= 0.5, y_true.to(self.device).view(-1, 1).bool()).int().sum()
             # backpropagation (compute gradients)
             loss.backward()
             # update weights according to optimizer
             self.optimizer.step()
             # accumulate train loss
             train_sum_loss += loss.detach().item()
+            # temporary loss
+            temp_train_loss = train_sum_loss / ((batch_num + 1) * self.batch_size)
+            pbar.set_description(f'Training (current average loss = {temp_train_loss: .4f})')
         return train_sum_loss / len(self.train_dataset), correct / len(self.train_dataset)
 
     def _val_epoch(self, val_loader) -> (float, float):
@@ -139,11 +143,11 @@ class Trainer:
             for batch in tqdm(val_loader, desc='Validating', file=sys.stdout):
                 x, y_true = batch
                 # forward model
-                y_pred = self.model(x.to(self.device))
+                y_pred = self.model(x.to(self.device), with_sigmoid=False)
                 # calculate loss
                 loss = self.criterion(y_pred, y_true.to(self.device).view(-1, 1))
                 # calculate classification metrics
-                correct += torch.eq(y_pred, y_true.to(self.device).view(-1, 1)).type(torch.int).sum()
+                correct += torch.eq(torch.sigmoid(y_pred) >= 0.5, y_true.to(self.device).view(-1, 1).bool()).int().sum()
                 # accumulate train loss
                 val_sum_loss += loss.detach().item()
         return val_sum_loss / len(self.val_dataset), correct / len(self.val_dataset)
