@@ -26,7 +26,7 @@ class RandomAgent(GameAgent):
 
 
 class AlphaBetaAgent(GameAgent):
-    def __init__(self, depth: int, player: int, heuristic: Callable[[GameState], float], use_tt=True, verbose=True):
+    def __init__(self, depth: int, player: int, heuristic: Callable[[GameState], float], use_tt=True, verbose=False):
         self.depth = depth
         self.player = 'max' if player == 1 else 'min'
         self.heuristic = heuristic
