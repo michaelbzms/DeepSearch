@@ -15,3 +15,7 @@ def load_model(file, ModelClass=None, **kargs):
         model = ModelClass(**kwargs)
         model.load_state_dict(state)
         return model
+
+
+def save_model(model, file):
+    torch.save([model.state_dict(), model.get_model_parameters()], file)
