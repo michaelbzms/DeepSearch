@@ -138,3 +138,19 @@ class ConnectFourState(GameState):
                 elif self.board[r, c, 1] == 1:
                     pygame.draw.circle(screen, YELLOW, (int(c * SQUARESIZE + SQUARESIZE / 2), height - int(r * SQUARESIZE + SQUARESIZE / 2)), RADIUS)
         pygame.display.update()
+
+    def serialize(self) -> np.array:
+        """ serialize state info TODO: check """
+        return self.board.flatten()
+
+    @staticmethod
+    def calculate_turn(board: np.ndarray):
+        return 1 if board.sum() % 2 == 0 else 2  # TODO: calculate based on board
+
+    @staticmethod
+    def deserialize(serial: np.ndarray) -> GameState:
+        board = serial.reshape((ConnectFourState.nrows, ConnectFourState.ncols, 2))
+        return ConnectFourState(
+            board=board,
+            turn=ConnectFourState.calculate_turn(board)
+        )
