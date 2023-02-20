@@ -12,7 +12,7 @@ class C4Dataset(Dataset):
 
     def __getitem__(self, index):
         item = self.data.iloc[index]
-        return torch.FloatTensor(self.deserialize_fn(item['board'])), float(item['target'])
+        return torch.FloatTensor(self.deserialize_fn(item['board'])).permute(2, 0, 1), float(item['target'])
 
     def __len__(self):
         return len(self.data)

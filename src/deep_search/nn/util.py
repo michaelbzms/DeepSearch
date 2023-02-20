@@ -1,4 +1,5 @@
 import torch
+import yaml
 
 
 def load_model(file, ModelClass=None, **kargs):
@@ -19,3 +20,10 @@ def load_model(file, ModelClass=None, **kargs):
 
 def save_model(model, file):
     torch.save([model.state_dict(), model.get_model_parameters()], file)
+
+
+def load_yaml_conf(conf_file_name: str):
+    """ Reads yaml file with hyperparameters. Doesn't check it. """
+    with open(conf_file_name, 'r') as config_file:
+        config = yaml.load(config_file, Loader=yaml.FullLoader)
+    return config

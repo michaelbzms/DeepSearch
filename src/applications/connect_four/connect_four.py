@@ -157,5 +157,4 @@ class ConnectFourState(GameState):
 
     @staticmethod
     def deserialize_board(serial: np.ndarray) -> np.ndarray:
-        board = serial.reshape((ConnectFourState.nrows, ConnectFourState.ncols, 2))
-        return board
+        return serial.reshape((ConnectFourState.nrows, ConnectFourState.ncols, 2))

@@ -65,38 +65,45 @@ class Trainer:
         if self.wandb is not None:
             self.wandb.watch(self.model)
 
-        for epoch in range(self.max_epochs):
-            # training
-            train_loss, train_acc = self._train_epoch(train_loader)
-            print(f'Training loss: {train_loss: .4f}, Train accuracy: {100 * train_acc: .2f} -', end='')
+        try:
+            for epoch in range(self.max_epochs):
+                # training
+                train_loss, train_acc = self._train_epoch(train_loader)
+                print(f'Training loss: {train_loss: .4f}, Train accuracy: {100 * train_acc: .2f}',)
 
-            # validation
-            val_loss, val_acc = self._val_epoch(val_loader)
-            print(f'Val loss: {val_loss: .4f}, Val accuracy: {100 * val_acc: .2f}',)
+                # validation
+                val_loss, val_acc = self._val_epoch(val_loader)
+                print(f'Val loss: {val_loss: .4f}, Val accuracy: {100 * val_acc: .2f}',)
 
-            # log wandb
-            self._log_wandb({
-                'train_loss': train_loss,
-                'train_acc': train_acc,
-                'val_loss': val_loss,
-                'val_acc': val_acc,
-            })
+                # log wandb
+                self._log_wandb({
+                    'train_loss': train_loss,
+                    'train_acc': train_acc,
+                    'val_loss': val_loss,
+                    'val_acc': val_acc,
+                })
 
-            # early stop update
-            save_checkpoint, stop = self._early_stop_update(val_loss, val_acc, epoch)
+                # early stop update
+                save_checkpoint, stop = self._early_stop_update(val_loss, val_acc, epoch)
 
-            if save_checkpoint:
-                # always store the model with the least running val loss achieved (saves kwargs as well)
-                save_model(self.model, self.checkpoint_model_path)
+                if save_checkpoint:
+                    # always store the model with the least running val loss achieved (saves kwargs as well)
+                    save_model(self.model, self.checkpoint_model_path)
 
-            if stop:
-                # last epoch or loss worsened more than our patience: stop and load the model with the best val loss
-                print(f'{"Stopping" if epoch + 1 == self.max_epochs else "Early stopping"} at epoch {epoch + 1}.')
-                print(f'Loading best model from checkpoint from epoch {self.checkpoint_epoch + 1} with best val accuracy: {100 * self.best_val_acc: .4f}')
-                state, _ = load_model(self.checkpoint_model_path)  # ignore kwargs -> we know them
-                self.model.load_state_dict(state)
-                self.model.eval()
-                break
+                if stop:
+                    # last epoch or loss worsened more than our patience: stop and load the model with the best val loss
+                    print(f'{"Stopping" if epoch + 1 == self.max_epochs else "Early stopping"} at epoch {epoch + 1}.')
+                    print(f'Loading best model from epoch {self.checkpoint_epoch + 1} with val accuracy: {100 * self.best_val_acc: .4f}')
+                    state, _ = load_model(self.checkpoint_model_path)  # ignore kwargs -> we know them
+                    self.model.load_state_dict(state)
+                    self.model.eval()
+                    break
+        except KeyboardInterrupt:
+            print(f'Training interrupted. Loading best model from epoch {self.checkpoint_epoch + 1}')
+            # load best model
+            state, _ = load_model(self.checkpoint_model_path)  # ignore kwargs -> we know them
+            self.model.load_state_dict(state)
+            self.model.eval()
 
         # save final model
         save_model(self.model, self.final_model_path)
@@ -111,11 +118,11 @@ class Trainer:
             # reset the gradients
             self.optimizer.zero_grad()
             # forward model
-            y_pred = self.model(x)
+            y_pred = self.model(x.to(self.device))
             # calculate loss
-            loss = self.criterion(y_pred, y_true.to(self.device))
+            loss = self.criterion(y_pred, y_true.to(self.device).view(-1, 1))
             # calculate classification metrics
-            correct += torch.equal(y_pred, y_true.to(self.device)).astype(int).sum()
+            correct += torch.eq(y_pred, y_true.to(self.device).view(-1, 1)).type(torch.int).sum()
             # backpropagation (compute gradients)
             loss.backward()
             # update weights according to optimizer
@@ -132,11 +139,11 @@ class Trainer:
             for batch in tqdm(val_loader, desc='Validating', file=sys.stdout):
                 x, y_true = batch
                 # forward model
-                y_pred = self.model(x)
+                y_pred = self.model(x.to(self.device))
                 # calculate loss
-                loss = self.criterion(y_pred, y_true.to(self.device))
+                loss = self.criterion(y_pred, y_true.to(self.device).view(-1, 1))
                 # calculate classification metrics
-                correct += torch.equal(y_pred, y_true.to(self.device)).astype(int).sum()
+                correct += torch.eq(y_pred, y_true.to(self.device).view(-1, 1)).type(torch.int).sum()
                 # accumulate train loss
                 val_sum_loss += loss.detach().item()
         return val_sum_loss / len(self.val_dataset), correct / len(self.val_dataset)
