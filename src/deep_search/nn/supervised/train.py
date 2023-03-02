@@ -67,6 +67,8 @@ class Trainer:
 
         try:
             for epoch in range(self.max_epochs):
+                print(f'\n__Epoch {epoch + 1}__')
+
                 # training
                 train_loss, train_acc = self._train_epoch(train_loader)
                 print(f'Training loss: {train_loss: .4f}, Train accuracy: {100 * train_acc: .2f}',)

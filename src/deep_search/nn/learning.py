@@ -42,6 +42,7 @@ class ImitationLearning:
         try:
             last_k_losses = []
             k_idx = 0
+            p1_wins = 0
             pbar = tqdm(range(num_episodes), total=num_episodes, file=sys.stdout)
             # for every game
             for episode_num in pbar:
@@ -57,6 +58,14 @@ class ImitationLearning:
                         # check stop
                         if current_state.is_final():
                             game_finished = True
+                            winner = current_state.get_winner()
+                            if winner == 1:
+                                p1_wins += 1
+                            elif winner == 0:  # draw
+                                p1_wins += 0.5
+                            self._log_wandb({
+                                'win_rate': p1_wins / (episode_num + 1)
+                            })
                             break
 
                         # learn to evaluate this state from the teacher

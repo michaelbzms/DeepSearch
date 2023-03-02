@@ -9,12 +9,13 @@ import wandb
 
 
 # TODO: move params to a yaml config file
-num_episodes = 1000
+num_episodes = 200
 log_wandb = True
 project_name = 'DeepSearch for Connect4'
 entity = 'michaelbzms'
-run_name = 'Loaded TD learning heuristic-alphabeta'
-start_model_file: str or None = '../../models/test_best_so_far.pt'
+run_name = 'Loaded TD learning heuristic-alphabeta (Pt3)'
+start_model_file: str or None = '../../models/test_student_h_vs_ab.pt'
+output_model_file: str = '../../models/test_student_h_vs_h.pt'
 
 
 if __name__ == '__main__':
@@ -30,7 +31,7 @@ if __name__ == '__main__':
     model = DeepHeuristic(
         value_network=net,
         train=True,
-        lr=1e-5,
+        lr=1e-4,
         weight_decay=1e-7,
         max_batch_size=2048,
     )
@@ -38,7 +39,7 @@ if __name__ == '__main__':
     # use random agents
     p1 = AlphaBetaAgent(depth=1, player=1, heuristic=model)
     # p1 = RandomAgent()
-    p2 = AlphaBetaAgent(depth=1, player=2, heuristic=total_consecutive_squares_eval)
+    p2 = AlphaBetaAgent(depth=1, player=2, heuristic=model)
     # p2 = RandomAgent()
 
     # starting state
@@ -67,7 +68,7 @@ if __name__ == '__main__':
             student=model,
             teacher=model,    # learn from this heuristic
             minimax_depth=2,
-            output_student_file='../../models/test_student.pt',
+            output_student_file=output_model_file,
             wandb=wandb if log_wandb else None
         )
         il.play_episodes(starting_state=s0, num_episodes=num_episodes)

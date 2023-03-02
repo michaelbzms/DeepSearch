@@ -1,8 +1,14 @@
-save_path: ../../models/final.pt
-lr: 0.0003
-weight_decay: 0.00001
-batch_size: 128
-val_batch_size: 512
-patience: 3
-max_patience: 5
-max_epochs: 100
+train_params:
+  save_path: ../../models/final.pt
+  lr: 0.0003
+  weight_decay: 0.00001
+  batch_size: 128
+  val_batch_size: 512
+  patience: 3
+  max_patience: 5
+  max_epochs: 100
+wandb:
+  log: True
+  project_name: "DeepSearch for Connect4"
+  entity: "michaelbzms"
+  run_name: "Supervised Learning"
