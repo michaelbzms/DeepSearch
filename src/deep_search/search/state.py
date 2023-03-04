@@ -22,6 +22,13 @@ class State(_State):
         raise NotImplemented
 
     @abstractmethod
+    def get_num_possible_actions(self) -> int:
+        """
+        Returns number of available actions from this state.
+        """
+        raise NotImplemented
+
+    @abstractmethod
     def get_possible_actions(self) -> Iterable[Action]:
         """
         Returns all the available actions from this state.

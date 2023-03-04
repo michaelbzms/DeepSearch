@@ -66,6 +66,9 @@ class ConnectFourState(GameState):
     def _calc_winner(self) -> int:
         return calc_winner_numba(self.nrows, self.ncols, self.connect_num, self.board, self.top)
 
+    def get_num_possible_actions(self) -> int:
+        return sum([int(self.top[i] < self.nrows) for i in range(self.ncols)])
+
     def get_possible_actions(self) -> Iterable[ConnectFourAction]:
         for i in range(self.ncols):
             if self.top[i] < self.nrows:
